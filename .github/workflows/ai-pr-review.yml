@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      HF_MODEL: "tiiuae/falcon-7b-instruct"
+      HF_MODEL: "mistralai/Mistral-7B-Instruct-v0.1"
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       GH_TOKEN: ${{ github.token }}
 
