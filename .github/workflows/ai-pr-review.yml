@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout
-      uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set up GitHub CLI
         env:
@@ -33,17 +33,14 @@ jobs:
             -f max_tokens=500 \
             -f messages='[
               {"role": "system", "content": "You are a senior engineer reviewing a pull request."},
-              {"role": "user", "content": "Review the following diff and provide suggested improvements:\n\n'"$PR_DIFF"'"}]'
+              {"role": "user", "content": "Review the diff and suggest improvements:\n\n'"$PR_DIFF"'"}]'
           )
 
           echo "$RESPONSE" > ai_review.json
-          cat ai_review.json
 
       - name: Comment on PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           REVIEW=$(jq -r '.choices[0].message.content' ai_review.json)
-
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body "### 🤖 AI Review\n$REVIEW"
+          gh pr comment ${{ github.event.pull_request.number }} --body "### 🤖 AI Review\n$REVIEW"
