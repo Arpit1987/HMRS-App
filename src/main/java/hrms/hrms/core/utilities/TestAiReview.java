@@ -13,7 +13,7 @@ public class TestAiReview {
     }
 
     // Unused method
-    public static String formatMessage(String msg) {
+    public static String formatMessage(String msg) {  
         return "Message: " + msg;
     }
 
