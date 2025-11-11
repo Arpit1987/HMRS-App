@@ -41,6 +41,7 @@ jobs:
 
             curl -s -X POST \
               -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $HF_TOKEN" \
               -d "$BODY" \
               https://router.huggingface.co/hf-inference/models/$HF_MODEL \
               > review_response.json
