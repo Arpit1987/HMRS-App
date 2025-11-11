@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      HF_MODEL: "google%2Fflan-t5-large"
+      HF_MODEL: "bigscience%2Fbloomz-560m"
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       GH_TOKEN: ${{ github.token }}
 
@@ -56,4 +56,4 @@ jobs:
       - name: Comment on PR
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body "### 🤖 AI Review (FLAN-T5)\n\n$(cat pr_review.txt)"
+            --body "### 🤖 AI Review (BloomZ)\n\n$(cat pr_review.txt)"
