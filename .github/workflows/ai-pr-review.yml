@@ -37,8 +37,16 @@ jobs:
 
       - name: Extract review text
         run: |
-          # Extract AI-generated review text
-          jq -r '.[0].generated_text' review_response.json > pr_review.txt
+          # Handle both array and non-array HuggingFace responses
+          REVIEW=$(jq -r '
+            if type == "array" then
+              .[0].generated_text
+            else
+              .generated_text
+            end
+          ' review_response.json)
+
+          echo "$REVIEW" > pr_review.txt
 
           echo "--- CLEANED REVIEW ---"
           cat pr_review.txt
