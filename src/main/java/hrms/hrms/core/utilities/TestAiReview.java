@@ -18,7 +18,7 @@ public class TestAiReview {
     }
 
     public static void main(String[] args) {
-        int result1 = add(5, 10);
+        int result1 = add(5, 10);  
         System.out.println("Result: " + result1);
 
         int result2 = divide(10, 0); // will throw ArithmeticException
