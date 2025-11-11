@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      HF_MODEL: "google/flan-t5-large"
+      HF_MODEL: "tiiuae/falcon-7b-instruct"
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       GH_TOKEN: ${{ github.token }}
 
@@ -24,33 +24,65 @@ jobs:
       - name: Get PR diff
         run: |
           gh pr diff ${{ github.event.pull_request.number }} > diff.txt
+          echo "--- PR DIFF START ---"
+          cat diff.txt
+          echo "--- PR DIFF END ---"
 
-      - name: Generate AI Review with HuggingFace Router
+      - name: Generate AI Review using HuggingFace Router API
         run: |
           BODY=$(jq -Rs '{inputs: .}' diff.txt)
 
-          curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $HF_TOKEN" \
-            -d "$BODY" \
-            https://router.huggingface.co/hf-inference/models/$HF_MODEL \
-            > review_response.json
+          ATTEMPTS=0
+          MAX_ATTEMPTS=5
+          SUCCESS=false
+
+          while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+            echo "Calling HuggingFace Router API (Attempt $((ATTEMPTS+1)) of $MAX_ATTEMPTS)..."
+
+            curl -s -X POST \
+              -H "Content-Type: application/json" \
+              -d "$BODY" \
+              https://router.huggingface.co/hf-inference/models/$HF_MODEL \
+              > review_response.json
+
+            # Check if response contains valid output
+            if jq -e 'has("generated_text") or (type=="array" and .[0].generated_text != null)' review_response.json > /dev/null; then
+              SUCCESS=true
+              break
+            fi
+
+            echo "Model not ready. Waiting 5 seconds..."
+            sleep 5
+            ATTEMPTS=$((ATTEMPTS+1))
+          done
+
+          if [ "$SUCCESS" = false ]; then
+            echo "Model failed to return valid output after $MAX_ATTEMPTS attempts."
+            cat review_response.json
+            exit 1
+          fi
 
       - name: Extract review text
         run: |
           REVIEW=$(jq -r '
-            if type == "array" and .[0].generated_text then
+            if type == "array" and .[0].generated_text != null then
               .[0].generated_text
-            elif type == "object" and .generated_text then
+            elif type == "object" and .generated_text != null then
               .generated_text
             else
-              "AI response invalid or empty."
+              "AI model could not generate a valid review."
             end
           ' review_response.json)
 
           echo "$REVIEW" > pr_review.txt
 
-      - name: Comment on PR
+          echo "--- CLEANED REVIEW ---"
+          cat pr_review.txt
+          echo "--- END CLEANED REVIEW ---"
+
+      - name: Comment AI Review on PR
         run: |
+          COMMENT_BODY=$(cat pr_review.txt)
+
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body "### 🤖 AI Review\n\n$(cat pr_review.txt)"
+            --body "### 🤖 AI Review (HuggingFace Falcon-7B-Instruct)\n\n$COMMENT_BODY"
