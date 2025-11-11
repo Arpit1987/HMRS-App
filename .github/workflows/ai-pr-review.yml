@@ -4,13 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   ai_review:
     runs-on: ubuntu-latest
-
-    permissions:
-      pull-requests: write   # ✅ required to allow commenting
-      contents: read
 
     env:
       HF_MODEL: "tiiuae/falcon-7b-instruct"
@@ -22,13 +22,12 @@ jobs:
 
       - name: Get PR diff
         run: |
-          echo "Fetching PR diff..."
           gh pr diff ${{ github.event.pull_request.number }} > diff.txt
-          echo "--- DIFF START ---"
+          echo "--- PR DIFF START ---"
           cat diff.txt
-          echo "--- DIFF END ---"
+          echo "--- PR DIFF END ---"
 
-      - name: Generate AI Review using HuggingFace (Falcon-7B-Instruct)
+      - name: Generate AI Review using HuggingFace Router API
         run: |
           BODY=$(jq -Rs '{inputs: .}' diff.txt)
 
@@ -37,14 +36,15 @@ jobs:
           SUCCESS=false
 
           while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-            echo "Calling HuggingFace (Attempt $((ATTEMPTS+1)) of $MAX_ATTEMPTS)..."
+            echo "Calling HuggingFace Router API (Attempt $((ATTEMPTS+1)) of $MAX_ATTEMPTS)..."
 
             curl -s -X POST \
               -H "Content-Type: application/json" \
               -d "$BODY" \
-              https://api-inference.huggingface.co/models/$HF_MODEL \
+              https://router.huggingface.co/hf-inference/models/$HF_MODEL \
               > review_response.json
 
+            # Check if response contains valid output
             if jq -e 'has("generated_text") or (type=="array" and .[0].generated_text != null)' review_response.json > /dev/null; then
               SUCCESS=true
               break
@@ -85,4 +85,3 @@ jobs:
 
           gh pr comment ${{ github.event.pull_request.number }} \
             --body "### 🤖 AI Review (HuggingFace Falcon-7B-Instruct)\n\n$COMMENT_BODY"
-
