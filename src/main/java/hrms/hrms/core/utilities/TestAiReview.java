@@ -7,7 +7,7 @@ public class TestAiReview {
         return sum;
     }
 
-    // No handling for divide-by-zero  
+    // No handling for divide-by-zero   
     public static int divide(int a, int b) {
         return a / b;
     }
