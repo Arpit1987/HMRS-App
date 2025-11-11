@@ -1,0 +1,39 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai_review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate AI Review
+        id: ai
+        run: |
+          PR_DIFF=$(gh pr diff ${{ github.event.pull_request.number }})
+
+          RESPONSE=$(gh api \
+            -X POST \
+            repos/${{ github.repository }}/copilot/llm/completions \
+            -f model="gpt-4o-mini" \
+            -f temperature=0.2 \
+            -f max_tokens=500 \
+            -f messages='[
+              {"role": "system", "content": "You are a senior engineer reviewing a pull request."},
+              {"role": "user", "content": "Review the following diff and provide suggested improvements:\n\n'"$PR_DIFF"'"}]'
+          )
+
+          echo "$RESPONSE" > ai_review.json
+          cat ai_review.json
+
+      - name: Comment on PR
+        run: |
+          REVIEW=$(jq -r '.choices[0].message.content' ai_review.json)
+
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "### 🤖 AI Review\n$REVIEW"
