@@ -10,12 +10,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+      uses: actions/checkout@v4
+
+      - name: Set up GitHub CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh --version
 
       - name: Generate AI Review
         id: ai
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          PR_DIFF=$(gh pr diff ${{ github.event.pull_request.number }})
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PR_DIFF=$(gh pr diff $PR_NUMBER)
 
           RESPONSE=$(gh api \
             -X POST \
@@ -32,6 +40,8 @@ jobs:
           cat ai_review.json
 
       - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           REVIEW=$(jq -r '.choices[0].message.content' ai_review.json)
 
