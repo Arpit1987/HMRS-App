@@ -12,35 +12,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up GitHub CLI
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh --version
-
-      - name: Generate AI Review
-        id: ai
+      - name: Get PR diff
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          PR_DIFF=$(gh pr diff $PR_NUMBER)
+          gh pr diff ${{ github.event.pull_request.number }} > diff.txt
 
-          RESPONSE=$(gh api \
+      - name: Call HuggingFace Inference API
+        run: |
+          BODY=$(jq -Rs '{inputs: .}' diff.txt)
+
+          curl -s \
             -X POST \
-            repos/${{ github.repository }}/copilot/llm/completions \
-            -f model="gpt-4o-mini" \
-            -f temperature=0.2 \
-            -f max_tokens=500 \
-            -f messages='[
-              {"role": "system", "content": "You are a senior engineer reviewing a pull request."},
-              {"role": "user", "content": "Review the diff and suggest improvements:\n\n'"$PR_DIFF"'"}]'
-          )
-
-          echo "$RESPONSE" > ai_review.json
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct \
+            > review.json
 
       - name: Comment on PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          REVIEW=$(jq -r '.choices[0].message.content' ai_review.json)
-          gh pr comment ${{ github.event.pull_request.number }} --body "### 🤖 AI Review\n$REVIEW"
+          REVIEW=$(jq -r '.[0].generated_text' review.json)
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "### 🤖 AI Review\n$REVIEW"
