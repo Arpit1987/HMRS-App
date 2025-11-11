@@ -3,7 +3,7 @@ name: AI PR Review (HuggingFace)
 permissions:
   contents: read
   pull-requests: write
-
+  
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -11,3 +11,56 @@ on:
 jobs:
   ai_review:
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get PR diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > diff.txt
+          echo "--- PR DIFF START ---"
+          cat diff.txt
+          echo "--- PR DIFF END ---"
+
+      - name: Generate AI Review using HuggingFace (Falcon-7B-Instruct)
+        run: |
+          BODY=$(jq -Rs '{inputs: .}' diff.txt)
+
+          curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct \
+            > review_response.json
+
+          echo "--- MODEL RAW OUTPUT ---"
+          cat review_response.json
+          echo "--- END RAW OUTPUT ---"
+
+      - name: Extract review text
+        run: |
+          # Handle both array and non-array HuggingFace responses
+          REVIEW=$(jq -r '
+            if type == "array" then
+              .[0].generated_text
+            else
+              .generated_text
+            end
+          ' review_response.json)
+
+          echo "$REVIEW" > pr_review.txt
+
+          echo "--- CLEANED REVIEW ---"
+          cat pr_review.txt
+          echo "--- END CLEANED REVIEW ---"
+
+      - name: Comment AI Review on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COMMENT_BODY=$(cat pr_review.txt)
+
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "### 🤖 AI Review (HuggingFace Model)\n\n$COMMENT_BODY"
