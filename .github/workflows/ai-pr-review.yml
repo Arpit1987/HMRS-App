@@ -28,7 +28,7 @@ jobs:
 
       - name: Generate AI Review using DeepSeek
         run: |
-          BODY=$(jq -Rs '{messages: [{role: "user", content: .}]}' diff.txt)
+          BODY=$(jq -Rs --arg model "deepseek-chat" '{model: $model, messages: [{role: "user", content: .}]}' diff.txt)
 
           echo "Calling DeepSeek API..."
           curl -s -X POST "https://api.deepseek.com/chat/completions" \
