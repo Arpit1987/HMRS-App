@@ -35,8 +35,28 @@ jobs:
         echo "**3. No divide-by-zero handling**" >> review.md
         echo "- Method will throw \`ArithmeticException\` when b=0" >> review.md
         echo "- Add validation: \`if (b == 0) throw new IllegalArgumentException(\"Divisor cannot be zero\")\`" >> review.md
+        echo "" >> review.md
+        echo "### ⚠️ Code Quality Issues" >> review.md
+        echo "" >> review.md
+        echo "**4. Unused method**" >> review.md
+        echo "- \`formatMessage\` method is defined but never used" >> review.md
+        echo "- Remove if unnecessary or add \`@Deprecated\` annotation" >> review.md
+        echo "" >> review.md
+        echo "**5. Poor logging practice**" >> review.md
+        echo "- Using \`System.out.println\` in production code" >> review.md
+        echo "- Consider using SLF4J or Log4j for proper logging" >> review.md
+        echo "" >> review.md
+        echo "### 📝 Suggestions" >> review.md
+        echo "" >> review.md
+        echo "**6. Add documentation**" >> review.md
+        echo "- Missing Javadoc for all public methods" >> review.md
+        echo "- Document parameters, return values, and exceptions" >> review.md
+        echo "" >> review.md
+        echo "**Recommendation**: Request changes until critical issues are resolved." >> review.md
         
-        gh pr review ${{ github.event.pull_request.number }} --body-file review.md --event REQUEST_CHANGES
+        # Use --request-changes instead of --event REQUEST_CHANGES
+        gh pr review ${{ github.event.pull_request.number }} --body-file review.md --request-changes
+        
         echo "✅ PR review submitted!"
         
       env:
