@@ -19,7 +19,7 @@ jobs:
       
     - name: Create PR Review
       run: |
-        echo "## 🔍 Java Code Review - TestAiReview.java" > review.md
+        echo "## 🔍 AI Assisted Code Review" > review.md
         echo "" >> review.md
         echo "### ❌ Critical Issues" >> review.md
         echo "" >> review.md
