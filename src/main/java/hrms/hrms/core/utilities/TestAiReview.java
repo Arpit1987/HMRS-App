@@ -10,7 +10,7 @@ public class TestAiReview {
     // No handling for divide-by-zero           
     public static int divide(int a, int b) {
         return a / b;
-    } 
+    }  
       
     // Unused method
     public static String formatMessage(String msg) {         
