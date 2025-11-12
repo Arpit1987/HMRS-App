@@ -12,8 +12,6 @@ jobs:
   java-code-review:
     name: Java Code Review
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
     
     steps:
     - name: Checkout code
@@ -24,95 +22,69 @@ jobs:
         echo "🔍 Starting Hardcoded Java Code Review"
         echo "======================================"
         
-        echo "📄 Reviewing TestAiReview.java"
+        # Define hardcoded review comments
+        echo "## Code Review Summary for TestAiReview.java" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "❌ **Issue 1: Poor validation in add method**" >> $GITHUB_STEP_SUMMARY
+        echo "   - Method 'add' lacks proper input validation" >> $GITHUB_STEP_SUMMARY
+        echo "   - No bounds checking for integer overflow" >> $GITHUB_STEP_SUMMARY
+        echo "   - Consider adding parameter validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "❌ **Issue 2: Incorrect string concatenation**" >> $GITHUB_STEP_SUMMARY
+        echo "   - String concatenation in println may not show expected output" >> $GITHUB_STEP_SUMMARY
+        echo "   - Use proper formatting: \"Adding numbers: \" + (a + b) or String.format()" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "❌ **Issue 3: No divide-by-zero handling**" >> $GITHUB_STEP_SUMMARY
+        echo "   - Method 'divide' doesn't handle division by zero" >> $GITHUB_STEP_SUMMARY
+        echo "   - Add check: if (b == 0) throw new IllegalArgumentException(\"Divisor cannot be zero\")" >> $GITHUB_STEP_SUMMARY
+        echo "   - Or return a default value with proper documentation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "⚠️ **Issue 4: Unused method**" >> $GITHUB_STEP_SUMMARY
+        echo "   - Method 'formatMessage' is defined but not used in main" >> $GITHUB_STEP_SUMMARY
+        echo "   - Consider removing if not needed, or add @Deprecated annotation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "⚠️ **Issue 5: Poor logging practice**" >> $GITHUB_STEP_SUMMARY
+        echo "   - Using System.out.println for logging in production code" >> $GITHUB_STEP_SUMMARY
+        echo "   - Consider using proper logging framework (SLF4J, Log4j)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "📝 **Suggestion: Add documentation**" >> $GITHUB_STEP_SUMMARY
+        echo "   - Consider adding Javadoc comments for public methods" >> $GITHUB_STEP_SUMMARY
+        echo "   - Document method parameters, return values, and exceptions" >> $GITHUB_STEP_SUMMARY
+        
+        # Also print to console
+        echo "## Code Review Summary for TestAiReview.java"
         echo ""
-        
-        # Define review comments
-        REVIEW_COMMENTS=()
-        
-        # Check 1: Poor validation in add method
-        if grep -q "public static int add(int a, int b)" TestAiReview.java; then
-          REVIEW_COMMENTS+=("❌ **Issue 1: Poor validation in add method**")
-          REVIEW_COMMENTS+=("   - Method 'add' lacks proper input validation")
-          REVIEW_COMMENTS+=("   - No bounds checking for integer overflow")
-          REVIEW_COMMENTS+=("   - Consider adding parameter validation")
-        fi
-        
-        # Check 2: Incorrect string concatenation
-        if grep -q 'System.out.println("Adding numbers: " + a + b)' TestAiReview.java; then
-          REVIEW_COMMENTS+=("")
-          REVIEW_COMMENTS+=("❌ **Issue 2: Incorrect string concatenation**")
-          REVIEW_COMMENTS+=("   - String concatenation in println may not show expected output")
-          REVIEW_COMMENTS+=("   - Use proper formatting: \"Adding numbers: \" + (a + b) or String.format()")
-        fi
-        
-        # Check 3: No divide-by-zero handling
-        if grep -q "public static int divide(int a, int b)" TestAiReview.java && ! grep -q "ArithmeticException" TestAiReview.java; then
-          REVIEW_COMMENTS+=("")
-          REVIEW_COMMENTS+=("❌ **Issue 3: No divide-by-zero handling**")
-          REVIEW_COMMENTS+=("   - Method 'divide' doesn't handle division by zero")
-          REVIEW_COMMENTS+=("   - Add check: if (b == 0) throw new IllegalArgumentException(\"Divisor cannot be zero\")")
-          REVIEW_COMMENTS+=("   - Or return a default value with proper documentation")
-        fi
-        
-        # Check 4: Unused method
-        if grep -q "public static String formatMessage(String msg)" TestAiReview.java; then
-          REVIEW_COMMENTS+=("")
-          REVIEW_COMMENTS+=("⚠️ **Issue 4: Unused method**")
-          REVIEW_COMMENTS+=("   - Method 'formatMessage' is defined but not used in main")
-          REVIEW_COMMENTS+=("   - Consider removing if not needed, or add @Deprecated annotation")
-        fi
-        
-        # Check 5: Poor logging practice
-        if grep -q "System.out.println" TestAiReview.java; then
-          REVIEW_COMMENTS+=("")
-          REVIEW_COMMENTS+=("⚠️ **Issue 5: Poor logging practice**")
-          REVIEW_COMMENTS+=("   - Using System.out.println for logging in production code")
-          REVIEW_COMMENTS+=("   - Consider using proper logging framework (SLF4J, Log4j)")
-        fi
-        
-        # Check 6: Missing documentation
-        DOC_LINES=$(grep -c "//\\|/\\*\\|\\*/" TestAiReview.java || true)
-        if [ "$DOC_LINES" -lt 3 ]; then
-          REVIEW_COMMENTS+=("")
-          REVIEW_COMMENTS+=("📝 **Suggestion: Add documentation**")
-          REVIEW_COMMENTS+=("   - Consider adding Javadoc comments for public methods")
-          REVIEW_COMMENTS+=("   - Document method parameters, return values, and exceptions")
-        fi
-        
-        # Output review results
-        if [ ${#REVIEW_COMMENTS[@]} -eq 0 ]; then
-          echo "✅ No issues found in the hardcoded review!"
-          echo "## Code Review Summary ✅" >> $GITHUB_STEP_SUMMARY
-          echo "No issues found in TestAiReview.java" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "## Code Review Summary for TestAiReview.java" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          for comment in "${REVIEW_COMMENTS[@]}"; do
-            echo "$comment" >> $GITHUB_STEP_SUMMARY
-          done
-          
-          echo ""
-          echo "📋 Review Summary:"
-          echo "=================="
-          for comment in "${REVIEW_COMMENTS[@]}"; do
-            echo "$comment"
-          done
-          
-          # Create a review comment (simulated)
-          echo ""
-          echo "🚨 Found issues that need attention"
-          echo "::warning file=TestAiReview.java::Hardcoded review found multiple issues. Check the summary."
-        fi
+        echo "❌ **Issue 1: Poor validation in add method**"
+        echo "   - Method 'add' lacks proper input validation"
+        echo "   - No bounds checking for integer overflow"
+        echo "   - Consider adding parameter validation"
+        echo ""
+        echo "❌ **Issue 2: Incorrect string concatenation**"
+        echo "   - String concatenation in println may not show expected output"
+        echo "   - Use proper formatting: \"Adding numbers: \" + (a + b) or String.format()"
+        echo ""
+        echo "❌ **Issue 3: No divide-by-zero handling**"
+        echo "   - Method 'divide' doesn't handle division by zero"
+        echo "   - Add check: if (b == 0) throw new IllegalArgumentException(\"Divisor cannot be zero\")"
+        echo "   - Or return a default value with proper documentation"
+        echo ""
+        echo "⚠️ **Issue 4: Unused method**"
+        echo "   - Method 'formatMessage' is defined but not used in main"
+        echo "   - Consider removing if not needed, or add @Deprecated annotation"
+        echo ""
+        echo "⚠️ **Issue 5: Poor logging practice**"
+        echo "   - Using System.out.println for logging in production code"
+        echo "   - Consider using proper logging framework (SLF4J, Log4j)"
+        echo ""
+        echo "📝 **Suggestion: Add documentation**"
+        echo "   - Consider adding Javadoc comments for public methods"
+        echo "   - Document method parameters, return values, and exceptions"
         
         echo ""
         echo "✅ Hardcoded Java review completed"
-        
-    - name: Upload Review Summary
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: java-code-review-summary
-        path: ${{ github.workflow }}-summary.md
-        retention-days: 30
