@@ -31,4 +31,11 @@ jobs:
           BODY=$(jq -Rs '{messages: [{role: "user", content: .}]}' diff.txt)
 
           echo "Calling DeepSeek API..."
-          curl -s -X POST "https://api.deepseek.com/chat/comp
+          curl -s -X POST "https://api.deepseek.com/chat/completions" \
+            -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            > review_response.json
+
+          echo "Raw response:"
+          cat review_response.json
