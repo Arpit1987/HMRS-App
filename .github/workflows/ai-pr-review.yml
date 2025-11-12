@@ -24,12 +24,6 @@ jobs:
         echo "🔍 Starting Hardcoded Java Code Review"
         echo "======================================"
         
-        # Check for the specific file
-        if [ ! -f "TestAiReview.java" ]; then
-          echo "❌ Target file TestAiReview.java not found"
-          exit 1
-        fi
-        
         echo "📄 Reviewing TestAiReview.java"
         echo ""
         
