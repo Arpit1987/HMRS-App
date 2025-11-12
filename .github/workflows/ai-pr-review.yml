@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-		
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -45,11 +45,11 @@ jobs:
         fi
         
         # Check 2: Incorrect string concatenation
-        if grep -q "System.out.println(\"Adding numbers: \" + a + b)" TestAiReview.java; then
+        if grep -q 'System.out.println("Adding numbers: " + a + b)' TestAiReview.java; then
           REVIEW_COMMENTS+=("")
           REVIEW_COMMENTS+=("❌ **Issue 2: Incorrect string concatenation**")
           REVIEW_COMMENTS+=("   - String concatenation in println may not show expected output")
-          REVIEW_COMMENTS+=("   - Use proper formatting: \\\"Adding numbers: \\\" + (a + b) or String.format()")
+          REVIEW_COMMENTS+=("   - Use proper formatting: \"Adding numbers: \" + (a + b) or String.format()")
         fi
         
         # Check 3: No divide-by-zero handling
@@ -57,7 +57,7 @@ jobs:
           REVIEW_COMMENTS+=("")
           REVIEW_COMMENTS+=("❌ **Issue 3: No divide-by-zero handling**")
           REVIEW_COMMENTS+=("   - Method 'divide' doesn't handle division by zero")
-          REVIEW_COMMENTS+=("   - Add check: if (b == 0) throw new IllegalArgumentException(\\\"Divisor cannot be zero\\\")")
+          REVIEW_COMMENTS+=("   - Add check: if (b == 0) throw new IllegalArgumentException(\"Divisor cannot be zero\")")
           REVIEW_COMMENTS+=("   - Or return a default value with proper documentation")
         fi
         
@@ -108,16 +108,12 @@ jobs:
           
           # Create a review comment (simulated)
           echo ""
-          echo "🚨 Found ${#REVIEW_COMMENTS[@]} issues that need attention"
+          echo "🚨 Found issues that need attention"
           echo "::warning file=TestAiReview.java::Hardcoded review found multiple issues. Check the summary."
         fi
         
         echo ""
         echo "✅ Hardcoded Java review completed"
-
-      env:
-        # This ensures the step summary is created properly
-        GITHUB_STEP_SUMMARY: ${{ github.workflow }}-summary.md
         
     - name: Upload Review Summary
       if: always()
