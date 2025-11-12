@@ -11,7 +11,7 @@ public class TestAiReview {
     public static int divide(int a, int b) {
         return a / b;
     }
-
+ 
     // Unused method
     public static String formatMessage(String msg) {         
         return "Message: " + msg;
