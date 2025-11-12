@@ -11,7 +11,6 @@ permissions:
 jobs:
   ai_review:
     runs-on: ubuntu-latest
-
     env:
       GH_TOKEN: ${{ github.token }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -23,26 +22,13 @@ jobs:
       - name: Get PR diff
         run: |
           gh pr diff ${{ github.event.pull_request.number }} > diff.txt
+          echo "--- DIFF START ---"
+          head -n 20 diff.txt
+          echo "--- DIFF END ---"
 
       - name: Generate AI Review using DeepSeek
         run: |
           BODY=$(jq -Rs '{messages: [{role: "user", content: .}]}' diff.txt)
 
-          curl -s -X POST "https://api.deepseek.com/chat/completions" \
-            -H "Authorization: Bearer $DEEPSEEK_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "$BODY" \
-            > review_response.json
-
-          echo "Raw response:"
-          cat review_response.json
-
-      - name: Extract review text
-        run: |
-          REVIEW=$(jq -r '.choices[0].message.content // "No review generated."' review_response.json)
-          echo "$REVIEW" > pr_review.txt
-
-      - name: Comment on PR
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body "### 🤖 AI Review (DeepSeek)\n\n$(cat pr_review.txt)"
+          echo "Calling DeepSeek API..."
+          curl -s -X POST "https://api.deepseek.com/chat/comp
